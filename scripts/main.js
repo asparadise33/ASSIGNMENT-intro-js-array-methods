@@ -7,6 +7,11 @@ import { renderToDom } from "../utils/renderToDom.js";
 // .forEach()
 const renderCards = (array) => {
   let refStuff = "<h1 class='text-white'>Cards Go Here!</h1>";
+  
+  array.forEach((item) => {
+   refStuff += card(item); //passes the entire card on the DOM
+  })
+  
   renderToDom("#cards", refStuff);
 }
 
@@ -14,7 +19,15 @@ const renderCards = (array) => {
 // .findIndex() & (.includes() - string method)
 const toggleCart = (event) => {
   if (event.target.id.includes("fav-btn")) {
-   console.log('Clicked Fav btn')
+    console.log('Clicked Fav btn')
+    const [, id] = event.target.id.split('--');
+    const index = referenceList.findIndex(item => item.id === Number(id));
+
+    referenceList[index].inCart =!referenceList[index].inCart
+    cartTotal();
+    renderCards(referenceList);
+
+
   }
 }
 
@@ -22,6 +35,12 @@ const toggleCart = (event) => {
 // .filter()
 const search = (event) => {
   const eventLC = event.target.value.toLowerCase();
+  const searchResult = referenceList.filter(item => 
+    item.title.toLowerCase().includes(eventLC) ||//or comparasion operator
+    item.author.toLowerCase().includes(eventLC) ||
+    item.description.toLowerCase().includes(eventLC)
+  );
+  renderCards(searchResult);
   console.log(eventLC)
 }
 
@@ -29,15 +48,23 @@ const search = (event) => {
 // .filter() & .reduce() &.sort() - chaining
 const buttonFilter = (event) => {
   if(event.target.id.includes('free')) {
+    const free = referenceList.filter (item => item.price <= 0)
+    renderCards(free);
     console.log('FREE')
   }
+
   if(event.target.id.includes('cartFilter')) {
+    const cartFilter = referenceList.filter(item => item.inCart);
+    renderCards(cartFilter);
     console.log('cartFilter')
   }
   if(event.target.id.includes('books')) {
+    const books = referenceList.filter(item => item.type.toLowerCase()=== 'book');
+    renderCards(books);
     console.log('books!')
   }
   if(event.target.id.includes('clearFilter')) {
+    renderCards(referenceList);
     console.log('clearFilter')
   }
   if(event.target.id.includes('productList')) {
@@ -51,8 +78,8 @@ const buttonFilter = (event) => {
     </thead>
     <tbody>
     `;
-    
-    productList().forEach(item => {
+    //add a sort function
+   productList().sort((a, b) => a.type.localeCompare(b.type)).forEach(item => {
       table += tableRow(item);
     });
 
@@ -66,14 +93,29 @@ const buttonFilter = (event) => {
 // CALCULATE CART TOTAL
 // .reduce() & .some()
 const cartTotal = () => {
-  const total = 0
+  const cart = referenceList.filter(item => item.inCart);
+  const total = cart.reduce((value1, value2) => value1 + value2.price, 0);//adds up the values fo the items we've added to the cart
+  const free = cart.some(item => item.price <= 0); //includes our freebies
   document.querySelector("#cartTotal").innerHTML = total.toFixed(2);
+
+  if (free) {
+    document.querySelector('#includes-free').innerHTML = 'INCLUDES FREE ITEMS'
+  }
+  else {
+    document.querySelector('#includes-free').innerHTML = ''
+
+  }
+  
 }
 
 // RESHAPE DATA TO RENDER TO DOM
 // .map()
 const productList = () => {
-  return [{ title: "SAMPLE TITLE", price: 45.00, type: "SAMPLE TYPE" }]
+  return referenceList.map(item =>({
+    title: item.title, 
+    price: item.price, 
+    type: item.type 
+  }))
 }
 
 
